@@ -1,0 +1,32 @@
+name: Container Images
+on: [ push ]
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  bitcoind_exporter:
+    name: Build and Push bitcoind-exporter Image
+    runs-on: ubuntu-20.04
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Build bitcoind-exporter Image
+      id: build-bitcoind-exporter
+      uses: redhat-actions/buildah-build@v2
+      with:
+        image: jmanero/bitcoind-exporter
+        tags: latest 0.0.1
+        containerfiles: Containerfile
+
+    - name: Push bitcoind-exporter Image to Registry
+      id: push
+      uses: redhat-actions/push-to-registry@v2
+      with:
+        image: ${{ steps.build-bitcoind-exporter.outputs.image }}
+        tags: ${{ steps.build-bitcoind-exporter.outputs.tags }}
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}

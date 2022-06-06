@@ -1,0 +1,30 @@
+[Unit]
+Description=Bitcoind Prometheus Exporter
+Documentation=https://github.com/jmanero/bitcoin
+
+Wants=network-online.target bitcoind.service podman-network@bitcoind.service
+After=network-online.target bitcoind.service podman-network@bitcoind.service
+
+RequiresMountsFor=%t/containers
+
+[Service]
+Type=notify
+NotifyAccess=all
+
+Restart=on-failure
+TimeoutStopSec=70
+
+Environment=PODMAN_SYSTEMD_UNIT=%n
+ExecStartPre=/usr/bin/rm -f %t/%n.cid
+ExecStop=/usr/bin/podman stop --ignore --cidfile %t/%n.cid
+ExecStopPost=/usr/bin/podman rm -f --ignore --cidfile %t/%n.cid
+
+ExecStart=/usr/bin/podman run -d --cidfile %t/%n.cid --rm --pull always\
+  --cgroups no-conmon --sdnotify conmon --log-driver journald  --name bitcoind-exporter\
+  --net bitcoind --publish 9142:9142\
+  --volume /var/data/bitcoin/.cookie:/data/.cookie:ro\
+  ghcr.io/jmanero/bitcoind-exporter:0.1.0\
+  --rpc-addr bitcoind:8332 --rpc-cookie /data/.cookie --no-rpc-tls --rpc-http-post
+
+[Install]
+WantedBy=default.target
