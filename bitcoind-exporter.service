@@ -1,9 +1,9 @@
 [Unit]
-Description=Bitcoind Prometheus Exporter
-Documentation=https://github.com/jmanero/bitcoin
+Description=bitcoind in a podman container
+Documentation=https://github.com/jmanero/bitcoin-image
 
-Wants=network-online.target bitcoind.service podman-network@bitcoind.service
-After=network-online.target bitcoind.service podman-network@bitcoind.service
+Wants=network-online.target local-fs.target podman-network@bitcoind.service
+After=network-online.target local-fs.target podman-network@bitcoind.service
 
 RequiresMountsFor=%t/containers
 
@@ -12,19 +12,22 @@ Type=notify
 NotifyAccess=all
 
 Restart=on-failure
-TimeoutStopSec=70
+TimeoutStopSec=120
 
 Environment=PODMAN_SYSTEMD_UNIT=%n
-ExecStartPre=/usr/bin/rm -f %t/%n.cid
-ExecStop=/usr/bin/podman stop --ignore --cidfile %t/%n.cid
-ExecStopPost=/usr/bin/podman rm -f --ignore --cidfile %t/%n.cid
+Environment=SERVICE_NAME=%N
+Environment=SERVICE_CONTAINER_IMAGE=ghcr.io/jmanero/bitcoind-exporter:latest
 
-ExecStart=/usr/bin/podman run -d --cidfile %t/%n.cid --rm --pull always\
-  --cgroups no-conmon --sdnotify conmon --log-driver journald  --name bitcoind-exporter\
-  --net bitcoind --publish 9142:9142\
-  --volume /var/data/bitcoin/.cookie:/data/.cookie:ro\
-  ghcr.io/jmanero/bitcoind-exporter:0.1.0\
-  --rpc-addr bitcoind:8332 --rpc-cookie /data/.cookie --no-rpc-tls --rpc-http-post
+ExecStartPre=/usr/bin/podman rm --force --ignore ${SERVICE_NAME}
+ExecStartPre=/usr/bin/mkdir -p /var/data/bitcoin
+
+ExecStart=/usr/bin/podman run -d --name ${SERVICE_NAME} --pull newer\
+  --cgroups no-conmon --sdnotify conmon --log-driver journald\
+  --read-only --network bitcoind --publish 9142:9142\
+  ${SERVICE_CONTAINER_IMAGE} --rpc-addr bitcoind:8332 --rpc-user local --rpc-pass local --no-rpc-tls --rpc-http-post
+
+ExecStop=/usr/bin/podman stop --ignore ${SERVICE_NAME}
+ExecStopPost=/usr/bin/podman rm --force --ignore ${SERVICE_NAME}
 
 [Install]
 WantedBy=default.target

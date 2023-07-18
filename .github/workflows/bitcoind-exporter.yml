@@ -1,13 +1,18 @@
-name: Container Images
-on: [ push ]
+name: bitcoind-exporter
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+    inputs: {}
 
 permissions:
   contents: read
   packages: write
 
 jobs:
-  bitcoind_exporter:
-    name: Build and Push bitcoind-exporter Image
+  image:
+    name: Build and Push Image
     runs-on: ubuntu-20.04
 
     steps:
@@ -18,7 +23,7 @@ jobs:
       uses: redhat-actions/buildah-build@v2
       with:
         image: jmanero/bitcoind-exporter
-        tags: latest 0.0.1
+        tags: latest 24.0 24.0-${{ github.sha }}
         containerfiles: Containerfile
 
     - name: Push bitcoind-exporter Image to Registry
