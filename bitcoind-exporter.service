@@ -1,6 +1,6 @@
 [Unit]
-Description=bitcoind in a podman container
-Documentation=https://github.com/jmanero/bitcoin-image
+Description=Prometheus exporter for bitcoin-core
+Documentation=https://github.com/jmanero/bitcoin-exporter
 
 Wants=network-online.target local-fs.target podman-network@bitcoind.service
 After=network-online.target local-fs.target podman-network@bitcoind.service
@@ -16,11 +16,9 @@ TimeoutStopSec=120
 
 Environment=PODMAN_SYSTEMD_UNIT=%n
 Environment=SERVICE_NAME=%N
-Environment=SERVICE_CONTAINER_IMAGE=ghcr.io/jmanero/bitcoind-exporter:latest
+Environment=SERVICE_CONTAINER_IMAGE=ghcr.io/jmanero/bitcoind-exporter:24.0
 
 ExecStartPre=/usr/bin/podman rm --force --ignore ${SERVICE_NAME}
-ExecStartPre=/usr/bin/mkdir -p /var/data/bitcoin
-
 ExecStart=/usr/bin/podman run -d --name ${SERVICE_NAME} --pull newer\
   --cgroups no-conmon --sdnotify conmon --log-driver journald\
   --read-only --network bitcoind --publish 9142:9142\

@@ -13,8 +13,8 @@ import (
 
 // IndexDescriptors contains cached descriptor values for collected index metrics
 var IndexDescriptors = []*prometheus.Desc{
-	prometheus.NewDesc("bitcoind_index_synced", "Whether the index is synced or not", []string{"chain", "index"}, prometheus.Labels{}),
 	prometheus.NewDesc("bitcoind_index_best_block_height", "Block height to which the index is synced", []string{"chain", "index"}, prometheus.Labels{}),
+	prometheus.NewDesc("bitcoind_index_synced", "Whether the index is synced or not", []string{"chain", "index"}, prometheus.Labels{}),
 }
 
 // NewIndexCollector creates a new prometheus.Collector for getindexinfo properties
